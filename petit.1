@@ -1,0 +1,45 @@
+.TH PETIT 1 petit
+
+.SH NAME
+petit - the stupid book tracker
+
+.SH SYNOPSIS
+.SY petit
+.OP add
+.OP del
+.OP set
+.OP listadd
+.OP listdel
+.OP dump
+
+.SH DESCRIPTION
+
+.B petit
+is a tool to keep track of books, TV shows and whatever you like.
+
+.SH USAGE
+Calling it without args will consider dump everything.
+
+.TP
+.B add\ \fIlist\ \fIbook\ \fI[opt]page
+Adds a new book to a list with a optional start page.
+
+.TP
+.B del\ \fIlist\ \fIbook
+Deletes a book.
+
+.TP
+.B set\ \fIlist\ \fIbook\ \fIpage
+Sets a new page to a book.
+
+.TP
+.B listadd\ \fIlist
+Adds a new list.
+
+.TP
+.B listdel\ \fIlist
+Removes a list.
+
+.TP
+.B dump\ \fI[opt]list
+Dumps a list or everything if no list specified.
