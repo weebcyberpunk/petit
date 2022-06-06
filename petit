@@ -1,0 +1,335 @@
+#!/usr/bin/python
+
+# author GG weebcyberpunk@gmail.com
+# version 0.0.0
+# since Jun 05, 2022
+
+#
+# Copyright 2022 © GG
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy of 
+# this software and associated documentation files (the “Software”), to deal 
+# in the Software without restriction, including without limitation the rights to 
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies 
+# of the Software, and to permit persons to whom the Software is furnished to do 
+# so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in all 
+# copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+# SOFTWARE.
+# 
+
+# so petit file is something like:
+#
+# \list1
+# book1|page
+# book2|page
+# \list2
+# book1list2|page
+#
+# the \ indicates a new list, the \n will break the data structures. The |
+# separates a book name from it's page. The page is a string.
+
+import os, sys
+
+prog_name = sys.argv[0]
+
+# USAGE {{{
+def usage():
+    print(f"""\
+{prog_name} add <list name> <book name> <optional init page>
+    adds a new book to a existent or not list, with the init page
+
+{prog_name} del <list name> <book name>
+    deletes a book
+
+{prog_name} set <list name> <book name> <page>
+    sets a book page
+
+{prog_name} listadd <list name>
+    adds a new list
+
+{prog_name} listdel <list name>
+    removes an entire list
+
+{prog_name} dump <list name>
+    dumps a list (without <list name> dumps everything)
+
+{prog_name}
+    same as {prog_name} dump
+""")
+# }}}
+
+
+# LIB {{{
+def open_default_file(mode: str):
+    filepath = os.path.expanduser("~")
+    filepath = f"{filepath}/.local/share/petit"
+
+    try:
+        file = open(filepath, mode)
+
+    except OSError:
+        return(1)
+
+    return file
+
+
+def get_def_file_lines():
+    file = open_default_file("r")
+    if file == 1:
+        print("Cannot read petit file! Maybe it's not created yet?")
+        print(f"Try creating a new list with {prog_name} listadd <list_name>")
+        exit(1)
+
+    lines = file.readlines()
+    file.close()
+    return(lines)
+
+
+def write_lines_to_file(lines: list):
+    file = open_default_file("w")
+    if file == 1:
+        print("Cannot write to petit file!")
+        exit(1)
+
+    for line in lines:
+        file.write(line)
+
+    file.close()
+# }}}
+
+
+# ADDBOOK {{{
+def addbook(list_name, book_name, page):
+    if book_name.find("\\") or book_name.find("\n") or book_name.find("|"):
+        print("Cannot have a \\, | or \\n on book names!")       
+        exit(1)
+
+    if list_name.find("\\") or list_name.find("\n"):
+        print("Cannot have a \\ or \\n on list names!")       
+        exit(1)
+
+    if page.find("\n") or page.find("|"):
+        print("Cannot have \\n or | on pages!")
+        exit(1)
+
+    added = False
+    this = False
+    lines = get_def_file_lines()
+
+    for index, line in enumerate(lines):
+        if line == f"\\{list_name}\n":
+            this = True
+            continue
+
+        elif this:
+            if line.split("|")[0] == book_name:
+                print(f"Book {book_name} already exists in {list_name}!")
+                exit(1)
+
+            elif line.startswith("\\"):
+                lines.insert(index, f"{book_name}|{page}\n")
+                added = True
+                break
+
+    # adds if list didn't exists or if the list was the last one and the loop stopped
+    if not added:
+        if not this:
+            lines.append(f"\\{list_name}\n")
+        lines.append(f"{book_name}|{page}\n")
+
+    write_lines_to_file(lines)
+# }}}
+
+
+# DELBOOK {{{
+def delbook(list_name, book_name):
+    lines = get_def_file_lines()
+    on_list = False
+
+    for index, line in enumerate(lines):
+        if line.startswith("\\"):
+            if line == f"\\{list_name}\n":
+                on_list = True
+
+        else:
+            if on_list:
+                if line.split("|")[0] == book_name:
+                    lines.pop(index)
+                    break
+
+    write_lines_to_file(lines)
+# }}}
+
+
+# SETBOOK {{{
+def setbook(list_name, book_name, page):
+    if page.find("\n") or page.find("|"):
+        print("Cannot have \\n or | on pages!")
+        exit(1)
+
+    lines = get_def_file_lines()
+    on_list = False
+
+    for index, line in enumerate(lines):
+        if line.startswith("\\"):
+            if line == f"\\{list_name}\n":
+                on_list = True
+
+        else:
+            if on_list:
+                split_line = line.split("|")
+                if split_line[0] == book_name:
+                    split_line[1] = f"{page}\n"
+                    lines[index] = "|".join(split_line)
+                    break
+
+    write_lines_to_file(lines)
+# }}}
+
+
+# LISTADD {{{
+def listadd(list_name):
+    if list_name.find("\\") or list_name.find("\n"):
+        print("Cannot have a \\ or \\n on list names!")       
+        exit(1)
+
+    string_on_file = f"\\{list_name}\n"
+    file = open_default_file("r")
+    if file != 1:
+        for line in file.readlines():
+            if line == string_on_file:
+                print(f"List {list_name} already exists!")
+                file.close()
+                exit(1)
+
+        file.close()
+
+    file = open_default_file("a")
+    if file == 1:
+        print("Cannot write to petit file!")
+        exit(1)
+
+    file.write(string_on_file)
+    file.close()
+# }}}
+
+
+# LISTDEL {{{
+def listdel(list_name):
+    lines = get_def_file_lines()
+
+    on_list = False
+    # we need a popped var because the loop will make the index of the list shift
+    popped = 0
+    new_lines = lines[:]
+    for index, line in enumerate(lines):
+        if line.startswith("\\"):
+            if line == f"\\{list_name}\n":
+                on_list = True
+                new_lines.pop(index - popped)
+                popped += 1
+            else:
+                on_list = False
+
+        else:
+            if on_list:
+                new_lines.pop(index - popped)
+                popped += 1
+
+    write_lines_to_file(new_lines)
+# }}}
+
+
+# DUMP {{{
+def dump(list_name = None):
+    on_list = True
+    if list_name != None:
+        on_list = False
+
+    lines = get_def_file_lines()
+
+    runned = False
+    for line in lines:
+
+        if line.startswith("\\"):
+            if line[1:-1] == list_name or list_name == None:
+                on_list = True
+                print(f"=== {line[1:-1]} ===")
+
+            else:
+                on_list = False
+
+                if runned:
+                    break
+
+            continue
+
+        if on_list: 
+            runned = True
+            split_line = line[:-1].split("|")
+            print(f"{split_line[0]} - {split_line[1]}")
+# }}}
+
+
+# MAIN {{{
+# args parsing
+argsnum = len(sys.argv)
+if argsnum >= 2:
+
+    # add or set
+    if sys.argv[1] == "add" or sys.argv[1] == "set":
+        if argsnum >= 5:
+            if sys.argv[1] == "add":
+                addbook(sys.argv[2], sys.argv[3], sys.argv[4])
+
+            elif sys.argv[1] == "set":
+                setbook(sys.argv[2], sys.argv[3], sys.argv[4])
+
+        else:
+            usage()
+
+    # del
+    elif sys.argv[1] == "del":
+        if argsnum >= 4:
+            delbook(sys.argv[2], sys.argv[3])
+
+        else:
+            usage()
+
+    # listadd or listdel
+    elif sys.argv[1] == "listadd" or sys.argv[1] == "listdel":
+        if argsnum >= 3:
+            if sys.argv[1] == "listadd":
+                listadd(sys.argv[2])
+
+            elif sys.argv[1] == "listdel":
+                listdel(sys.argv[2])
+
+            else:
+                usage()
+
+
+    # dump
+    elif sys.argv[1] == "dump":
+        if argsnum >= 3:
+            dump(sys.argv[2])
+
+        else:
+            exit(dump())
+
+    else:
+        usage()
+
+else:
+    dump()
+# }}}
+
