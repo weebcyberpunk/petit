@@ -104,22 +104,27 @@ def write_lines_to_file(lines: list):
         file.write(line)
 
     file.close()
+
+
+def check_names(list_name='', book_name='', page=''):
+    if book_name.find("\n") != -1 or book_name.find("|") != -1 or book_name.find("\n") != -1:
+        print("Cannot have a \\, | or \\n on book names!")       
+        exit(1)
+
+    if list_name.find("\\") != -1 or list_name.find("\n") != -1:
+        print("Cannot have a \\ or \\n on list names!")       
+        exit(1)
+
+    if page.find("\n") != -1 or page.find("|") != -1:
+        print("Cannot have \\n or | on pages!")
+        exit(1)
+
 # }}}
 
 
 # ADDBOOK {{{
 def addbook(list_name, book_name, page):
-    if book_name.find("\\") or book_name.find("\n") or book_name.find("|"):
-        print("Cannot have a \\, | or \\n on book names!")       
-        exit(1)
-
-    if list_name.find("\\") or list_name.find("\n"):
-        print("Cannot have a \\ or \\n on list names!")       
-        exit(1)
-
-    if page.find("\n") or page.find("|"):
-        print("Cannot have \\n or | on pages!")
-        exit(1)
+    check_names(list_name, book_name, page)
 
     added = False
     this = False
@@ -172,9 +177,7 @@ def delbook(list_name, book_name):
 
 # SETBOOK {{{
 def setbook(list_name, book_name, page):
-    if page.find("\n") or page.find("|"):
-        print("Cannot have \\n or | on pages!")
-        exit(1)
+    check_names(list_name, book_name, page)
 
     lines = get_def_file_lines()
     on_list = False
@@ -198,9 +201,7 @@ def setbook(list_name, book_name, page):
 
 # LISTADD {{{
 def listadd(list_name):
-    if list_name.find("\\") or list_name.find("\n"):
-        print("Cannot have a \\ or \\n on list names!")       
-        exit(1)
+    check_names(list_name=list_name)
 
     string_on_file = f"\\{list_name}\n"
     file = open_default_file("r")
@@ -293,6 +294,10 @@ if argsnum >= 2:
 
             elif sys.argv[1] == "set":
                 setbook(sys.argv[2], sys.argv[3], sys.argv[4])
+
+        elif argsnum == 4:
+            if sys.argv[1] == "add":
+                addbook(sys.argv[2], sys.argv[3], "0")
 
         else:
             usage()
