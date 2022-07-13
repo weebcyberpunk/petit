@@ -250,13 +250,30 @@ def listdel(list_name):
 # }}}
 
 
-# DUMP {{{
+# DUMP 
 def dump(list_name = None):
+
+    lines = get_def_file_lines()
+
+    # size for pretty dump
+    consider = True
+    biggest_len = 0
+    for line in lines:
+        if  line.startswith("\\"):
+            if list_name != None:
+                if line[1:-1] == list_name:
+                    consider = True
+                else:
+                    consider = False
+
+        elif consider:
+            cur_len = len(line[:-1].split("|")[0])
+            if cur_len > biggest_len:
+                biggest_len = cur_len
+
     on_list = True
     if list_name != None:
         on_list = False
-
-    lines = get_def_file_lines()
 
     runned = False
     for line in lines:
@@ -277,8 +294,10 @@ def dump(list_name = None):
         if on_list: 
             runned = True
             split_line = line[:-1].split("|")
-            print(f"{split_line[0]} - {split_line[1]}")
-# }}}
+            print(f"{split_line[0]}", end="")
+            print(" " * (4 + biggest_len - len(split_line[0])), end="")
+            print(f"{split_line[1]}")
+# 
 
 
 # MAIN {{{
